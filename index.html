@@ -123,7 +123,7 @@ body.open .hc>*{animation:up 1.4s cubic-bezier(.2,.8,.2,1) forwards}
 /* video */
 #vid{background:var(--night);padding:0 1.4rem 4.5rem}
 .vw{max-width:780px;margin:0 auto;padding:10px;border:1px solid var(--gl);outline:1px solid rgba(230,194,122,.35);outline-offset:6px;box-shadow:0 30px 70px rgba(0,0,0,.6)}
-video{width:100%;display:block;background:#000}
+video{width:100%;display:block;background:#000;pointer-events:none}
 
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}[data-a],.hc>*{opacity:1;transform:none;clip-path:none}#pt{display:none}}
 </style>
@@ -247,7 +247,7 @@ video{width:100%;display:block;background:#000}
 <!-- আশীর্বাদী ভিডিও (একদম শেষে, কোনো লেখা ছাড়া) -->
 <section id="vid">
   <div class="vw" data-a="z">
-    <video id="v" controls playsinline preload="metadata" poster="video/poster.jpg"><source src="video/blessing.mp4" type="video/mp4"></video>
+    <video id="v" muted loop autoplay playsinline disablepictureinpicture preload="auto" poster="video/poster.jpg"><source src="video/blessing.mp4" type="video/mp4"></video>
   </div>
 </section>
 
@@ -259,11 +259,12 @@ video{width:100%;display:block;background:#000}
   function stop(){au.pause()}
   /* দ্বার খোলা — এই একটি ট্যাপেই গান শুরু হয় (ব্রাউজার ট্যাপ ছাড়া গান চালাতে দেয় না) */
   document.getElementById('open').addEventListener('click',function(){au.volume=0;start();B.classList.add('open');window.scrollTo(0,0)});
-  /* ভিডিও চললে গান থামবে, ভিডিও থামলে আবার চলবে; ট্যাব বদলালেও থামবে */
-  var vp=false;
-  v.addEventListener('play',function(){vp=true;stop()});
-  ['pause','ended'].forEach(function(e){v.addEventListener(e,function(){vp=false;if(playing&&B.classList.contains('open')&&!document.hidden)au.play().catch(function(){})})});
-  document.addEventListener('visibilitychange',function(){if(document.hidden)stop();else if(playing&&!vp)au.play().catch(function(){})});
+  /* ট্যাব বদলালে গান থামবে, ফিরলে আবার চলবে (ভিডিওর কারণে গান থামে না) */
+  document.addEventListener('visibilitychange',function(){if(document.hidden)stop();else if(playing)au.play().catch(function(){})});
+  /* ভিডিও নিজে থেকেই চলবে (মিউট করা, কোনো বাটন নেই) */
+  v.muted=true;v.loop=true;
+  var vo=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)v.play().catch(function(){});else v.pause()})},{threshold:.25});
+  vo.observe(v);
 
   /* অ্যানিমেশন — স্ক্রল করলে ফুটে ওঠে */
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}})},{threshold:0,rootMargin:'0px 0px -8% 0px'});
